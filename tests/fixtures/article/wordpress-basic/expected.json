@@ -1,0 +1,34 @@
+{
+  "id": "article/wordpress-basic",
+  "pageType": "article",
+  "minPageConfidence": 0.6,
+  "expectedRegions": [
+    {
+      "kind": "article",
+      "required": true,
+      "mustContainText": [
+        "How to build reliable browser agents",
+        "The extraction engine should normalize the DOM"
+      ],
+      "mustNotContainText": [
+        "Cookie preferences",
+        "Subscribe to our newsletter"
+      ],
+      "maxLinkDensity": 0.45
+    }
+  ],
+  "expectedFields": {
+    "article.title": {
+      "equals": "How to build reliable browser agents"
+    },
+    "article.author": {
+      "contains": "Jane Doe"
+    }
+  },
+  "forbiddenDetections": [
+    {
+      "kind": "product",
+      "reason": "Article fixture should not be classified as commerce"
+    }
+  ]
+}

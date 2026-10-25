@@ -1,0 +1,30 @@
+{
+  "id": "product/shopify-basic",
+  "pageType": "product_detail",
+  "minPageConfidence": 0.6,
+  "expectedRegions": [
+    {
+      "kind": "product",
+      "required": true,
+      "mustContainText": ["Wireless Noise-Cancelling Headphones", "$299.99"],
+      "maxLinkDensity": 0.5
+    }
+  ],
+  "expectedFields": {
+    "product.title": {
+      "equals": "Wireless Noise-Cancelling Headphones"
+    },
+    "product.price": {
+      "contains": "299"
+    },
+    "product.availability": {
+      "contains": "InStock"
+    }
+  },
+  "forbiddenDetections": [
+    {
+      "kind": "article",
+      "reason": "Product fixture should not be classified as an article"
+    }
+  ]
+}

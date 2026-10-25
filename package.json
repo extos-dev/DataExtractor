@@ -1,0 +1,42 @@
+{
+  "name": "@tabwize/data-extractor",
+  "version": "1.0.0",
+  "description": "Production-grade, framework-agnostic DOM pattern extractor and LLM context formatter",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "build:extension": "esbuild extension/background.ts --bundle --format=esm --outfile=extension/background.js --external:chrome --target=es2022 && esbuild extension/content.ts --bundle --format=esm --outfile=extension/content.js --external:chrome --target=es2022 && esbuild extension/sidepanel.ts --bundle --format=esm --outfile=extension/sidepanel.js --external:chrome --target=es2022",
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "prebuild": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "llm",
+    "web-scraping",
+    "data-extraction",
+    "markdown-formatter",
+    "chrome-extension",
+    "browser-automation"
+  ],
+  "author": "TabWize",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.268",
+    "esbuild": "^0.28.2",
+    "happy-dom": "^21.0.4",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.4",
+    "vite-plugin-dts": "^3.9.1",
+    "vitest": "^2.1.9"
+  }
+}

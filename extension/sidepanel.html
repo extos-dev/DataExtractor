@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+          'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+          sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f9fafb;
+        width: 100%;
+        min-width: 320px;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .header h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .mode-toggle {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+      }
+      .toggle-switch {
+        position: relative;
+        width: 40px;
+        height: 22px;
+        background: rgba(255,255,255,0.3);
+        border-radius: 11px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+      .toggle-switch.active {
+        background: #10b981;
+      }
+      .toggle-knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        background: white;
+        border-radius: 50%;
+        transition: left 0.3s;
+      }
+      .toggle-switch.active .toggle-knob {
+        left: 20px;
+      }
+      .tabs {
+        display: flex;
+        background: white;
+        border-bottom: 2px solid #e5e7eb;
+      }
+      .tab {
+        flex: 1;
+        padding: 8px 4px;
+        text-align: center;
+        font-size: 11px;
+        cursor: pointer;
+        border: none;
+        background: none;
+        color: #6b7280;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+      .tab.active {
+        color: #667eea;
+        border-bottom: 2px solid #667eea;
+        margin-bottom: -2px;
+      }
+      .tab:hover {
+        color: #4b5563;
+        background: #f9fafb;
+      }
+      .tab-content {
+        display: none;
+        padding: 12px;
+        height: calc(100vh - 110px);
+        overflow-y: auto;
+      }
+      .tab-content.active {
+        display: block;
+      }
+      .section {
+        background: white;
+        border-radius: 8px;
+        padding: 10px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      .section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 4px 0;
+        font-size: 11px;
+        border-bottom: 1px solid #f3f4f6;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-label {
+        color: #6b7280;
+      }
+      .info-value {
+        color: #111827;
+        font-weight: 500;
+        text-align: right;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .schema-item {
+        padding: 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .schema-item:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+      .schema-name {
+        font-size: 12px;
+        font-weight: 600;
+        color: #111827;
+      }
+      .schema-meta {
+        font-size: 10px;
+        color: #6b7280;
+        margin-top: 2px;
+      }
+      .schema-badge {
+        display: inline-block;
+        padding: 1px 6px;
+        border-radius: 4px;
+        font-size: 9px;
+        margin-left: 4px;
+      }
+      .badge-auto {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .badge-manual {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .btn {
+        width: 100%;
+        padding: 8px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 6px;
+      }
+      .btn:hover {
+        opacity: 0.9;
+      }
+      .btn-secondary {
+        background: white;
+        color: #374151;
+        border: 1px solid #d1d5db;
+      }
+      .btn-secondary:hover {
+        background: #f9fafb;
+      }
+      .tree-search {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        font-size: 11px;
+        margin-bottom: 6px;
+      }
+      .tree-container {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        max-height: 380px;
+        overflow-y: auto;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        font-size: 11px;
+      }
+      .tree-node {
+        padding: 2px 4px;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .tree-node:hover {
+        background: #e0e7ff;
+      }
+      .tree-node.selected {
+        background: #c7d2fe;
+      }
+      .tree-arrow {
+        display: inline-block;
+        width: 10px;
+        color: #6b7280;
+      }
+      .tree-tag {
+        color: #7c3aed;
+        font-weight: 600;
+      }
+      .tree-id {
+        color: #dc2626;
+      }
+      .tree-class {
+        color: #059669;
+      }
+      .tree-attr {
+        color: #ea580c;
+      }
+      .tree-text {
+        color: #6b7280;
+        font-style: italic;
+      }
+      .tree-children {
+        display: block;
+      }
+      .tree-children.collapsed {
+        display: none;
+      }
+      .element-info {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 4px;
+        padding: 6px;
+        margin-top: 8px;
+        font-size: 10px;
+      }
+      .element-info-row {
+        padding: 2px 0;
+        word-break: break-all;
+      }
+      .output {
+        background: #1f2937;
+        color: #e5e7eb;
+        padding: 8px;
+        border-radius: 6px;
+        font-size: 10px;
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      #inspect-status {
+        font-size: 10px;
+        color: #f59e0b;
+        margin-top: 4px;
+        padding: 6px;
+        background: #fef3c7;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h3>⚡ TabWize Extractor</h3>
+      <div class="mode-toggle">
+        <span>Default</span>
+        <div class="toggle-switch" id="modeToggle">
+          <div class="toggle-knob"></div>
+        </div>
+        <span>Edit</span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="page">📄 Page & Schemas</button>
+      <button class="tab" data-tab="tree">🌳 DOM Tree</button>
+      <button class="tab" data-tab="snapshot">📝 LLM Snapshot</button>
+      <button class="tab" data-tab="settings">⚙️ Settings</button>
+    </div>
+
+    <!-- Tab 1: Page Info & Schemas -->
+    <div class="tab-content active" id="tab-page">
+      <div class="section">
+        <div class="section-title">📊 Page Information</div>
+        <div id="pageInfo">
+          <div class="info-row">
+            <span class="info-label">Loading...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">🔖 Extraction Schemas</div>
+        <div style="font-size: 10px; color: #6b7280; margin-bottom: 6px;">
+          Reusable extraction shortcuts for this page
+        </div>
+        <div id="schemasList">
+          <div style="font-size: 11px; color: #6b7280;">No schemas yet</div>
+        </div>
+        <button class="btn" id="autoDetectBtn">🔍 Run Auto Detection</button>
+        <button class="btn btn-secondary" id="createSchemaBtn">➕ Create Manual Schema</button>
+      </div>
+    </div>
+
+    <!-- Tab 2: DOM Tree Map -->
+    <div class="tab-content" id="tab-tree">
+      <div class="section">
+        <div class="section-title">🌳 DOM Tree Map</div>
+        <div style="font-size: 10px; color: #6b7280; margin-bottom: 6px;">
+          Navigate and inspect page structure like DevTools
+        </div>
+        <input type="text" class="tree-search" id="treeSearch" placeholder="Search elements..." />
+        <button class="btn btn-secondary" id="refreshTreeBtn">🔄 Refresh Tree</button>
+        <div class="tree-container" id="domTree">
+          <div style="padding: 10px; font-size: 11px; color: #6b7280;">Click refresh to load tree</div>
+        </div>
+        <div id="elementInfo" class="element-info" style="display: none;">
+          <div style="font-weight: 600; margin-bottom: 4px; color: #374151;">Element Info</div>
+          <div id="elementInfoContent"></div>
+        </div>
+      </div>
+      <div id="inspect-status"></div>
+    </div>
+
+    <!-- Tab 3: Page Snapshot for LLM -->
+    <div class="tab-content" id="tab-snapshot">
+      <div class="section">
+        <div class="section-title">📝 LLM Snapshot</div>
+        <div style="font-size: 10px; color: #6b7280; margin-bottom: 6px;">
+          Cleaned snapshot optimized for LLM consumption
+        </div>
+        <button class="btn" id="generateSnapshotBtn">Generate Snapshot</button>
+        <button class="btn btn-secondary" id="copySnapshotBtn">📋 Copy to Clipboard</button>
+        <div id="snapshotOutput" class="output" style="margin-top: 10px;">Click generate to create snapshot...</div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Settings -->
+    <div class="tab-content" id="tab-settings">
+      <div class="section">
+        <div class="section-title">⚙️ Settings</div>
+        <div style="font-size: 11px; color: #6b7280;">
+          <p><strong>Mode:</strong> <span id="currentMode">Default</span></p>
+          <p><strong>Auto-detect on page load:</strong> Enabled</p>
+          <p><strong>Version:</strong> 1.0.0</p>
+        </div>
+        <button class="btn btn-secondary" id="clearAllBtn">🗑️ Clear All Schemas</button>
+      </div>
+    </div>
+
+    <script type="module" src="./sidepanel.js"></script>
+  </body>
+</html>

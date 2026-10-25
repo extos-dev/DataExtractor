@@ -1,0 +1,19 @@
+{
+  "id": "ai-chat/generic-chat",
+  "pageType": "ai_chat",
+  "minPageConfidence": 0.6,
+  "expectedRegions": [
+    {
+      "kind": "ai_chat",
+      "required": true,
+      "mustContainText": ["What is DOM parsing", "DOM parsing is the process"],
+      "maxLinkDensity": 0.5
+    }
+  ],
+  "forbiddenDetections": [
+    {
+      "kind": "product",
+      "reason": "Chat fixture should not be classified as commerce"
+    }
+  ]
+}

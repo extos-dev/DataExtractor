@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "noEmit": false,
+    "outDir": "./extension/dist",
+    "rootDir": ".",
+    "strict": true,
+    "isolatedModules": true
+  },
+  "include": ["extension", "src"]
+}

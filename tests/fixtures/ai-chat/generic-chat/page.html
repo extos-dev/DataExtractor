@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Chat</title>
+  </head>
+  <body>
+    <header><nav><a href="/">Home</a></nav></header>
+    <main>
+      <div class="conversation" data-testid="conversation">
+        <div class="message user" data-message-role="user">
+          <div class="text">What is DOM parsing and how does it help extraction?</div>
+        </div>
+        <div class="message assistant" data-message-role="assistant">
+          <div class="text">DOM parsing is the process of reading and traversing the Document Object Model so an extraction engine can identify regions, tables, lists, and chat messages.</div>
+        </div>
+        <div class="message user" data-message-role="user">
+          <div class="text">Can you give an example of a table?</div>
+        </div>
+        <div class="message assistant" data-message-role="assistant">
+          <div class="text">Sure. A semantic table uses the table, tr, th, and td elements to present tabular data.</div>
+        </div>
+      </div>
+      <form class="composer">
+        <textarea placeholder="Ask a follow-up..." aria-label="Message input"></textarea>
+        <button type="submit" aria-label="Send message">Send</button>
+      </form>
+    </main>
+    <footer><a href="/privacy">Privacy</a></footer>
+  </body>
+</html>

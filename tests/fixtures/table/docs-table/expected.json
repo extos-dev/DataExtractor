@@ -1,0 +1,19 @@
+{
+  "id": "table/docs-table",
+  "pageType": "dashboard",
+  "minPageConfidence": 0.5,
+  "expectedRegions": [
+    {
+      "kind": "table",
+      "required": true,
+      "mustContainText": ["Feature", "Stable", "Robustness"],
+      "mustNotContainText": ["Subscribe to our newsletter"]
+    }
+  ],
+  "forbiddenDetections": [
+    {
+      "kind": "product",
+      "reason": "Table fixture should not be classified as a product"
+    }
+  ]
+}

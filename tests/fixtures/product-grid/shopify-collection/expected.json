@@ -1,0 +1,19 @@
+{
+  "id": "product-grid/shopify-collection",
+  "pageType": "product_listing",
+  "minPageConfidence": 0.6,
+  "expectedRegions": [
+    {
+      "kind": "product_listing",
+      "required": true,
+      "mustContainText": ["Wireless Mouse", "Mechanical Keyboard", "USB-C Hub"],
+      "maxLinkDensity": 0.6
+    }
+  ],
+  "forbiddenDetections": [
+    {
+      "kind": "article",
+      "reason": "Product grid fixture should not be classified as an article"
+    }
+  ]
+}
