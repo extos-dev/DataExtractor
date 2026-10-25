@@ -414,19 +414,22 @@ export class OverlayManager {
 
       const toolbar = document.createElement('div');
       toolbar.style.position = 'absolute';
-      toolbar.style.top = '-26px';
+      toolbar.style.top = '-34px';
       toolbar.style.left = '0px';
       toolbar.style.display = 'flex';
       toolbar.style.alignItems = 'center';
-      toolbar.style.gap = '6px';
-      toolbar.style.padding = '3px 8px';
-      toolbar.style.background = color;
-      toolbar.style.color = '#fff';
-      toolbar.style.fontSize = '11px';
+      toolbar.style.gap = '10px';
+      toolbar.style.maxWidth = '100%';
+      toolbar.style.padding = '6px 10px';
+      toolbar.style.background = '#ffffff';
+      toolbar.style.color = '#0f172a';
+      toolbar.style.fontSize = '13px';
       toolbar.style.fontWeight = '600';
-      toolbar.style.borderRadius = '4px 4px 0 0';
-      toolbar.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
-      toolbar.textContent = `T1 ${item.kind}`;
+      toolbar.style.border = '1px solid #e2e8f0';
+      toolbar.style.borderRadius = '10px 10px 0 0';
+      toolbar.style.boxShadow = '0 4px 12px rgba(15,23,42,0.08)';
+      toolbar.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+      toolbar.innerHTML = `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;padding:0 6px;border-radius:6px;background:${color};color:#fff;font-size:11px;font-weight:700;">T1</span><span style="font-weight:600;white-space:nowrap;">${item.kind}</span><span style="color:#64748b;font-size:12px;white-space:nowrap;">detected</span>`;
       box.appendChild(toolbar);
 
       box.addEventListener('click', (e) => {

@@ -97,12 +97,12 @@ async function autoDetectOnLoad() {
 // Run auto-detect after a short delay
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(autoDetectOnLoad, 2000);
-  setTimeout(autoDetectOnLoad, 4000);
+    setTimeout(autoDetectOnLoad, 3000);
+  setTimeout(autoDetectOnLoad, 6000);
   });
 } else {
-  setTimeout(autoDetectOnLoad, 2000);
-  setTimeout(autoDetectOnLoad, 4000);
+  setTimeout(autoDetectOnLoad, 3000);
+  setTimeout(autoDetectOnLoad, 6000);
 }
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
