@@ -198,35 +198,84 @@ document.getElementById('refreshTreeBtn')?.addEventListener('click', async () =>
   });
 });
 
-function renderDomTree(node: any, container: HTMLElement, depth = 0) {
+function renderDomTree(node: any, container: HTMLElement) {
+  container.innerHTML = '';
   if (!node) return;
-  
-  const div = document.createElement('div');
-  div.className = 'tree-node';
-  div.style.paddingLeft = (depth * 12) + 'px';
-  
-  let html = '<span class="tree-indent">└─</span> ';
-  html += `<span class="tree-tag">&lt;${node.tagName}&gt;</span>`;
+  const root = buildTreeNode(node, 0);
+  container.appendChild(root);
+}
+
+function buildTreeNode(node: any, depth: number): HTMLElement {
+  const kindColors: Record<string,string> = {
+    article:'#8b5cf6', product:'#f59e0b', record_list:'#f97316', table:'#10b981',
+    ai_chat:'#06b6d4', list:'#6366f1', input:'#ec4899', composer:'#14b8a6',
+    bar:'#64748b', panel:'#a855f7', action:'#ef4444', text:'#94a3b8',
+    navigation:'#0ea5e9', breadcrumb:'#84cc16', form:'#f43f5e', media:'#22c55e',
+  };
+  const wrapper = document.createElement('div');
+
+  const row = document.createElement('div');
+  row.className = 'tree-node';
+  row.style.paddingLeft = (depth * 14) + 'px';
+  row.style.display = 'flex';
+  row.style.alignItems = 'center';
+  row.style.gap = '4px';
+
+  const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+  const arrow = document.createElement('span');
+  arrow.className = 'tree-arrow';
+  arrow.textContent = hasChildren ? '▸' : ' ';
+  arrow.style.cursor = hasChildren ? 'pointer' : 'default';
+  arrow.style.width = '12px';
+  arrow.style.textAlign = 'center';
+
+  const label = document.createElement('span');
+  let html = `<span class="tree-tag">&lt;${node.tagName}&gt;</span>`;
   if (node.id) html += ` <span class="tree-id">#${node.id}</span>`;
-  if (node.className) html += ` <span class="tree-class">.${node.className.split(' ')[0]}</span>`;
-  
-  div.innerHTML = html;
-  div.title = node.textContent || '';
-  
-  div.addEventListener('click', async (e) => {
+  if (node.className) html += ` <span class="tree-class">.${String(node.className).split(' ')[0]}</span>`;
+  if (node.kind) {
+    const c = kindColors[node.kind] || '#6b7280';
+    html += ` <span style="background:${c};color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:4px;">${node.kind}</span>`;
+  }
+  label.innerHTML = html;
+
+  row.appendChild(arrow);
+  row.appendChild(label);
+  wrapper.appendChild(row);
+
+  const childrenContainer = document.createElement('div');
+  childrenContainer.className = 'tree-children collapsed';
+  if (hasChildren) {
+    for (const child of node.children) {
+      childrenContainer.appendChild(buildTreeNode(child, depth + 1));
+    }
+  }
+  wrapper.appendChild(childrenContainer);
+
+  if (hasChildren) {
+    arrow.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const collapsed = childrenContainer.classList.toggle('collapsed');
+      arrow.textContent = collapsed ? '▸' : '▾';
+    });
+  }
+
+  row.addEventListener('click', async (e) => {
     e.stopPropagation();
+    // highlight on page
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab) return;
     chrome.tabs.sendMessage(tab.id!, { action: 'HIGHLIGHT_ELEMENT', selector: node.selector });
-  });
-  
-  container.appendChild(div);
-  
-  if (node.children) {
-    for (const child of node.children) {
-      renderDomTree(child, container, depth + 1);
+    // toggle expand
+    if (hasChildren) {
+      const collapsed = childrenContainer.classList.toggle('collapsed');
+      arrow.textContent = collapsed ? '▸' : '▾';
     }
-  }
+  });
+
+  row.title = (node.textContent || '').slice(0, 120);
+
+  return wrapper;
 }
 
 // Snapshot

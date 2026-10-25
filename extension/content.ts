@@ -13,6 +13,7 @@ const overlays = new OverlayManager();
 // Store current page info and schemas
 let currentPageInfo: any = null;
 let currentSchemas: any[] = [];
+let lastDetection: any = null;
 
 // Auto-detect page type on load
 async function autoDetectOnLoad() {
@@ -57,6 +58,19 @@ async function autoDetectOnLoad() {
       }
     }
     
+    // Run full detection to render overlays and capture result for DOM map
+    try {
+      const det = await engine.extract(document.body as HTMLElement);
+      lastDetection = det;
+      overlays.render(det.extractions, {
+        onNodeSelect: (item: any) => {
+          chrome.runtime.sendMessage({ action: 'NODE_SELECTED_IN_PAGE', payload: item }).catch(() => {});
+        },
+      });
+    } catch (e) {
+      console.error('Detection failed', e);
+    }
+
     // Notify side panel
     chrome.runtime.sendMessage({
       action: 'PAGE_INFO_UPDATED',
@@ -103,6 +117,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
           llmContext: item.llmContext,
         }));
 
+        lastDetection = result;
         sendResponse({ success: true, nodes: serializable, result });
       })
       .catch((error) => {
@@ -152,9 +167,8 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   }
 
   if (request.action === 'GET_DOM_TREE') {
-    // Serialize DOM tree
     try {
-      const tree = serializeDomTree(document.body);
+      const tree = serializeDomTree(document.body, 0, lastDetection);
       sendResponse({ success: true, tree });
     } catch (e) {
       sendResponse({ success: false, error: String(e) });
@@ -222,14 +236,24 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   return true;
 });
 
-function serializeDomTree(root: Element, depth = 0): any {
-  if (depth > 6) return null; // Limit depth for performance
+function findKind(el: Element, detection: any): string | undefined {
+  if (!detection) return undefined;
+  const items = [...(detection.selected || []), ...(detection.candidates || [])];
+  for (const c of items) {
+    if (c.element === el) return c.kind;
+  }
+  return undefined;
+}
+
+function serializeDomTree(root: Element, depth = 0, detection: any = null): any {
+  if (depth > 6) return null;
   const info = {
     tagName: root.tagName.toLowerCase(),
     id: root.id || undefined,
     className: typeof root.className === 'string' && root.className.trim() ? root.className.trim() : undefined,
     textContent: (root.textContent || '').trim().substring(0, 60),
     selector: generateSimpleSelector(root),
+    kind: findKind(root, detection),
     children: [] as any[]
   };
   
@@ -237,7 +261,7 @@ function serializeDomTree(root: Element, depth = 0): any {
   const children = Array.from(root.children).slice(0, 50);
   for (const child of children) {
     if (child.tagName === 'SCRIPT' || child.tagName === 'STYLE') continue;
-    const childTree = serializeDomTree(child, depth + 1);
+    const childTree = serializeDomTree(child, depth + 1, detection);
     if (childTree) {
       info.children.push(childTree);
     }

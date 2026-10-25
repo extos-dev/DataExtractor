@@ -569,6 +569,9 @@ var TABLE_TAGS = /* @__PURE__ */ new Set(["TABLE"]);
 var MEDIA_TAGS = /* @__PURE__ */ new Set(["FIGURE", "PICTURE", "VIDEO", "AUDIO"]);
 var NAV_TAGS = /* @__PURE__ */ new Set(["NAV", "HEADER", "FOOTER"]);
 var FORM_TAGS = /* @__PURE__ */ new Set(["FORM"]);
+var INPUT_TAGS = /* @__PURE__ */ new Set(["INPUT", "TEXTAREA", "SELECT"]);
+var BUTTON_TAGS = /* @__PURE__ */ new Set(["BUTTON"]);
+var BAR_TAGS = /* @__PURE__ */ new Set(["HEADER", "FOOTER", "NAV", "ASIDE"]);
 var CHAT_ROLE_PATTERNS = [
   /data-message-role/i,
   /data-role/i,
@@ -660,6 +663,21 @@ var BlockSegmenter = class {
         buttonCount: node.features.buttonCount
       });
     }
+    if (INPUT_TAGS.has(tag) || role === "textbox" || role === "searchbox" || role === "combobox") {
+      return this.classifyInput(node);
+    }
+    if (BUTTON_TAGS.has(tag) || role === "button") {
+      return this.createBlock(node, "action", {
+        text: node.features.text
+      });
+    }
+    if (tag === "TEXTAREA" || role === "textbox") {
+      const composer = this.classifyComposer(node);
+      if (composer) return composer;
+    }
+    if (BAR_TAGS.has(tag) || role === "banner" || role === "toolbar" || role === "navigation" || role === "complementary" || role === "contentinfo") {
+      return this.classifyBar(node);
+    }
     if (MEDIA_TAGS.has(tag)) {
       return this.createBlock(node, "media", {
         imageCount: node.features.imageCount
@@ -677,6 +695,10 @@ var BlockSegmenter = class {
     const cardGrid = this.classifyCardGrid(node);
     if (cardGrid) {
       return cardGrid;
+    }
+    const recordGroup = this.classifyRecordGroup(node);
+    if (recordGroup) {
+      return recordGroup;
     }
     if (this.looksLikeBreadcrumb(node)) {
       return this.createBlock(node, "breadcrumb", {
@@ -857,6 +879,33 @@ var BlockSegmenter = class {
     }
     return null;
   }
+  classifyRecordGroup(node) {
+    const children = Array.from(node.element.children);
+    if (children.length < 3) return null;
+    const fingerprints = children.map((child) => this.createStructuralFingerprint(child));
+    const counts = /* @__PURE__ */ new Map();
+    for (const fp of fingerprints) counts.set(fp, (counts.get(fp) ?? 0) + 1);
+    const dominant = Math.max(...counts.values());
+    const ratio = dominant / children.length;
+    if (ratio < 0.6) return null;
+    const hasImages = node.features.imageCount >= children.length * 0.4;
+    const hasLinks = node.features.linkCount >= children.length * 0.4;
+    let score = 0.5 + ratio * 0.3;
+    if (hasImages) score += 0.08;
+    if (hasLinks) score += 0.07;
+    return this.createBlock(
+      node,
+      "record_group",
+      {
+        itemCount: children.length,
+        dominantRatio: ratio,
+        hasImages,
+        hasLinks,
+        fingerprint: [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+      },
+      clamp(score)
+    );
+  }
   createStructuralFingerprint(element) {
     const children = Array.from(element.children);
     const childTags = children.map((child) => child.tagName.toLowerCase()).join(">");
@@ -897,6 +946,50 @@ var BlockSegmenter = class {
     }
     const ariaLevel = element.getAttribute("aria-level");
     return ariaLevel ? Number(ariaLevel) : 1;
+  }
+  classifyInput(node) {
+    const text = node.features.text ?? "";
+    const score = 0.7;
+    return this.createBlock(
+      node,
+      "input",
+      {
+        inputType: node.element.type ?? "text",
+        placeholder: node.element.placeholder ?? "",
+        textLength: text.length
+      },
+      clamp(score)
+    );
+  }
+  classifyComposer(node) {
+    const root = node.element.closest("body") ?? node.element.ownerDocument.body;
+    const hasSend = Boolean(
+      root?.querySelector('[aria-label*="send" i], button[type="submit"], [data-testid*="send" i]')
+    );
+    const score = hasSend ? 0.82 : 0.55;
+    return this.createBlock(
+      node,
+      "composer",
+      {
+        hasSendControl: hasSend,
+        textLength: (node.features.text ?? "").length
+      },
+      clamp(score)
+    );
+  }
+  classifyBar(node) {
+    const linkCount = node.features.linkCount ?? 0;
+    const buttonCount = node.features.buttonCount ?? 0;
+    const score = clamp(0.5 + Math.min(0.2, linkCount * 0.02) + Math.min(0.15, buttonCount * 0.03));
+    return this.createBlock(
+      node,
+      "bar",
+      {
+        linkCount,
+        buttonCount
+      },
+      score
+    );
   }
   createBlock(node, kind, metadata = {}, score = 0.5) {
     this.blockIdCounter++;
@@ -950,12 +1043,17 @@ var RegionGrouper = class {
     this.groupArticles(blocks);
     this.groupAiChat(blocks);
     this.groupProductListings(blocks);
+    this.groupRecordLists(blocks);
     this.groupTables(blocks);
     this.groupLists(blocks);
     this.groupNavigation(blocks);
     this.groupBreadcrumbs(blocks);
     this.groupForms(blocks);
     this.groupMedia(blocks);
+    this.groupInputs(blocks);
+    this.groupComposers(blocks);
+    this.groupBars(blocks);
+    this.groupActions(blocks);
     const byKind = {};
     for (const region of this.regions) {
       byKind[region.kind] = (byKind[region.kind] ?? 0) + 1;
@@ -1142,6 +1240,61 @@ var RegionGrouper = class {
         blocks: [item],
         score: item.score,
         metadata: { ...item.metadata }
+      });
+    }
+  }
+  groupInputs(blocks) {
+    for (const input of blocks.filter((block) => block.kind === "input")) {
+      this.addRegion({
+        kind: "input",
+        anchor: input,
+        blocks: [input],
+        score: input.score,
+        metadata: { ...input.metadata }
+      });
+    }
+  }
+  groupComposers(blocks) {
+    for (const composer of blocks.filter((block) => block.kind === "composer")) {
+      this.addRegion({
+        kind: "composer",
+        anchor: composer,
+        blocks: [composer],
+        score: composer.score,
+        metadata: { ...composer.metadata }
+      });
+    }
+  }
+  groupBars(blocks) {
+    for (const bar of blocks.filter((block) => block.kind === "bar")) {
+      this.addRegion({
+        kind: "bar",
+        anchor: bar,
+        blocks: [bar],
+        score: bar.score,
+        metadata: { ...bar.metadata }
+      });
+    }
+  }
+  groupActions(blocks) {
+    for (const action of blocks.filter((block) => block.kind === "action")) {
+      this.addRegion({
+        kind: "action",
+        anchor: action,
+        blocks: [action],
+        score: action.score,
+        metadata: { ...action.metadata }
+      });
+    }
+  }
+  groupRecordLists(blocks) {
+    for (const rg of blocks.filter((block) => block.kind === "record_group")) {
+      this.addRegion({
+        kind: "record_list",
+        anchor: rg,
+        blocks: [rg],
+        score: rg.score,
+        metadata: { ...rg.metadata }
       });
     }
   }
@@ -1406,6 +1559,7 @@ var ContextBuilder = class {
 var SPECIFICITY = {
   product: 0.95,
   product_listing: 0.9,
+  record_list: 0.88,
   ai_chat: 0.9,
   article: 0.85,
   table: 0.8,
@@ -1415,16 +1569,25 @@ var SPECIFICITY = {
   list: 0.55,
   blog_index: 0.5,
   navigation: 0.5,
-  generic: 0.1
+  generic: 0.1,
+  input: 0.6,
+  composer: 0.75,
+  bar: 0.45,
+  panel: 0.5,
+  action: 0.4,
+  text: 0.35
 };
 var RegionArbiter = class {
   select(candidates, _context) {
     const sorted = [...candidates].sort((a, b) => {
+      if (b.score !== a.score) {
+        return b.score - a.score;
+      }
       const specificityDelta = SPECIFICITY[b.kind] - SPECIFICITY[a.kind];
       if (Math.abs(specificityDelta) > 1e-3) {
         return specificityDelta;
       }
-      return b.score - a.score;
+      return 0;
     });
     const selected = [];
     for (const candidate of sorted) {
@@ -2547,6 +2710,62 @@ var TableDetector = class extends BaseDetectorPlugin {
   }
 };
 
+// src/detection/detectors/ContextDetector.ts
+var KINDS = [
+  "list",
+  "navigation",
+  "breadcrumb",
+  "form",
+  "media",
+  "text"
+];
+var ContextDetector = class extends BaseDetectorPlugin {
+  id = "core.context";
+  kinds = KINDS;
+  version = "1.0.0";
+  applies(context) {
+    return KINDS.some(
+      (kind) => context.getRegion(kind).length > 0 || context.getBlocks(kind).length > 0
+    );
+  }
+  detect(context) {
+    const candidates = [];
+    for (const kind of KINDS) {
+      const regions = context.getRegion(kind);
+      for (const region of regions) {
+        const candidate = this.buildCandidate(context, kind, region);
+        if (candidate) candidates.push(candidate);
+      }
+    }
+    return this.rankAndLimit(candidates, context);
+  }
+  buildCandidate(context, kind, region) {
+    const evidence = [
+      {
+        signal: "context_region",
+        weight: 0.35,
+        value: kind,
+        explanation: `Detected ${kind} context region.`
+      }
+    ];
+    let score = region.score || 0.5;
+    if (score < context.options.minConfidence) {
+      score = Math.max(context.options.minConfidence, 0.4);
+    }
+    return this.candidate({
+      context,
+      detectorId: this.id,
+      kind,
+      region,
+      element: region.element,
+      score,
+      evidence,
+      fields: {},
+      metadata: { surface: kind, ...region.metadata }
+    });
+  }
+};
+
 // src/detection/detectors/ProductDetector.ts
 function walkJsonLd(value, visit) {
   if (!value || typeof value !== "object") return;
@@ -2861,7 +3080,8 @@ function createCoreDetectors() {
     new ProductGridDetector(),
     new ArticleDetector(),
     new AiChatDetector(),
-    new TableDetector()
+    new TableDetector(),
+    new ContextDetector()
   ];
 }
 function registerCoreDetectors(engine2) {
@@ -2871,12 +3091,30 @@ function registerCoreDetectors(engine2) {
 }
 
 // src/visual/OverlayManager.ts
+var KIND_COLOR = {
+  article: "#8b5cf6",
+  product: "#f59e0b",
+  product_listing: "#f97316",
+  ai_chat: "#06b6d4",
+  table: "#10b981",
+  list: "#6366f1",
+  input: "#ec4899",
+  composer: "#14b8a6",
+  bar: "#64748b",
+  panel: "#a855f7",
+  action: "#ef4444",
+  text: "#94a3b8",
+  navigation: "#0ea5e9",
+  breadcrumb: "#84cc16",
+  form: "#f43f5e",
+  media: "#22c55e",
+  generic: "#9ca3af"
+};
 var HOST_ID = "tabwize-overlay-host";
 var OverlayManager = class {
   shadowHost = null;
   shadowRoot = null;
   activeMenu = null;
-  mode = "default";
   inspectOptions = {};
   // Inspect mode state
   hoverBox = null;
@@ -2993,7 +3231,6 @@ var OverlayManager = class {
     document.body.appendChild(this.shadowHost);
   }
   setMode(mode, options = {}) {
-    this.mode = mode;
     this.inspectOptions = options;
     if (mode === "inspect" || mode === "edit") {
       this.enableInspectMode();
@@ -3191,15 +3428,19 @@ var OverlayManager = class {
     items.forEach((item) => {
       if (!item.element) return;
       const rect = item.element.getBoundingClientRect();
+      const color = KIND_COLOR[item.kind] ?? "#3b82f6";
       const box = document.createElement("div");
       box.className = "highlight-box";
+      box.style.borderColor = color;
+      box.style.background = color + "14";
       box.style.top = `${rect.top + window.scrollY}px`;
       box.style.left = `${rect.left + window.scrollX}px`;
       box.style.width = `${rect.width}px`;
       box.style.height = `${rect.height}px`;
       const badge = document.createElement("div");
       badge.className = "badge";
-      badge.textContent = `\u2728 ${item.llmContext.title || item.kind}`;
+      badge.style.background = color;
+      badge.textContent = `${item.kind} \xB7 ${item.llmContext.title || ""}`.trim();
       box.appendChild(badge);
       box.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -3309,21 +3550,20 @@ var SchemaStorage = class {
   }
   static async getForPage(domain, url, pageType) {
     const schemas = await this.getAllAsync();
-    return schemas.filter((schema) => {
-      if (schema.domain && domain && schema.domain === domain) return true;
-      if (schema.pageType && pageType && schema.pageType === pageType) return true;
-      if (schema.urlPattern && url) {
+    const scored = schemas.map((schema) => {
+      let score = 0;
+      if (schema.domain && domain && schema.domain === domain) score += 3;
+      if (schema.urlPattern && url && schema.urlPattern.length <= 256) {
         try {
-          const regex = new RegExp(schema.urlPattern);
-          if (regex.test(url)) return true;
+          if (new RegExp(schema.urlPattern).test(url)) score += 4;
         } catch {
         }
       }
-      if (schema.source === "manual" && (schema.domain === domain || !schema.domain)) {
-        return true;
-      }
-      return false;
-    });
+      if (schema.pageType && pageType && schema.pageType === pageType) score += 1;
+      if (schema.source === "manual" && (!schema.domain || schema.domain === domain)) score += 0.5;
+      return { schema, score };
+    }).filter((entry) => entry.score > 0).sort((a, b) => b.score - a.score);
+    return scored.map((entry) => entry.schema);
   }
   static createAutoSchema(name, pageType, domain, region) {
     return {
@@ -3369,13 +3609,15 @@ var SchemaStorage = class {
           { name: "content", type: "html" }
         ];
       case "product_detail":
+      case "product_listing":
         return [
           { name: "title", type: "text" },
           { name: "price", type: "text" },
           { name: "description", type: "html" },
           { name: "images", type: "list" }
         ];
-      case "ai_chat":
+      case "documentation":
+      case "news_article":
         return [
           { name: "messages", type: "list" }
         ];
@@ -3410,6 +3652,7 @@ registerCoreDetectors(engine);
 var overlays = new OverlayManager();
 var currentPageInfo = null;
 var currentSchemas = [];
+var lastDetection = null;
 async function autoDetectOnLoad() {
   try {
     const contextBuilder = new ContextBuilder();
@@ -3442,6 +3685,18 @@ async function autoDetectOnLoad() {
           currentSchemas.push(schema);
         }
       }
+    }
+    try {
+      const det = await engine.extract(document.body);
+      lastDetection = det;
+      overlays.render(det.extractions, {
+        onNodeSelect: (item) => {
+          chrome.runtime.sendMessage({ action: "NODE_SELECTED_IN_PAGE", payload: item }).catch(() => {
+          });
+        }
+      });
+    } catch (e) {
+      console.error("Detection failed", e);
     }
     chrome.runtime.sendMessage({
       action: "PAGE_INFO_UPDATED",
@@ -3482,6 +3737,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         markdown: item.markdown,
         llmContext: item.llmContext
       }));
+      lastDetection = result;
       sendResponse({ success: true, nodes: serializable, result });
     }).catch((error) => {
       sendResponse({ success: false, error: String(error) });
@@ -3528,7 +3784,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   }
   if (request.action === "GET_DOM_TREE") {
     try {
-      const tree = serializeDomTree(document.body);
+      const tree = serializeDomTree(document.body, 0, lastDetection);
       sendResponse({ success: true, tree });
     } catch (e) {
       sendResponse({ success: false, error: String(e) });
@@ -3590,7 +3846,15 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   }
   return true;
 });
-function serializeDomTree(root, depth = 0) {
+function findKind(el, detection) {
+  if (!detection) return void 0;
+  const items = [...detection.selected || [], ...detection.candidates || []];
+  for (const c of items) {
+    if (c.element === el) return c.kind;
+  }
+  return void 0;
+}
+function serializeDomTree(root, depth = 0, detection = null) {
   if (depth > 6) return null;
   const info = {
     tagName: root.tagName.toLowerCase(),
@@ -3598,12 +3862,13 @@ function serializeDomTree(root, depth = 0) {
     className: typeof root.className === "string" && root.className.trim() ? root.className.trim() : void 0,
     textContent: (root.textContent || "").trim().substring(0, 60),
     selector: generateSimpleSelector(root),
+    kind: findKind(root, detection),
     children: []
   };
   const children = Array.from(root.children).slice(0, 50);
   for (const child of children) {
     if (child.tagName === "SCRIPT" || child.tagName === "STYLE") continue;
-    const childTree = serializeDomTree(child, depth + 1);
+    const childTree = serializeDomTree(child, depth + 1, detection);
     if (childTree) {
       info.children.push(childTree);
     }
