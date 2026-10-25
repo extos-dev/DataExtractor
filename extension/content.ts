@@ -17,12 +17,6 @@ let currentSchemas: any[] = [];
 let lastDetection: any = null;
 
 // Auto-detect page type on load
-if (!document.getElementById('tabwize-overlay-host')) {
-  const __hx = document.createElement('div');
-  __hx.id = 'tabwize-overlay-host';
-  __hx.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147483647;';
-  (document.body || document.documentElement).appendChild(__hx);
-}
 async function autoDetectOnLoad() {
   const __h0 = document.getElementById('tabwize-overlay-host') || (document.body && (document.body.appendChild(Object.assign(document.createElement('div'),{id:'tabwize-overlay-host'})), document.getElementById('tabwize-overlay-host')));
   try {
@@ -76,7 +70,8 @@ async function autoDetectOnLoad() {
         },
       });
       const __h = document.getElementById('tabwize-overlay-host');
-      if (__h) __h.textContent = 'OVERLAYS:' + (det.extractions?.length || 0);
+      const __c = __h && __h.shadowRoot && __h.shadowRoot.querySelector('#overlay-container');
+      if (__c) { const __d = document.createElement('div'); __d.style.cssText='position:fixed;top:0;left:0;background:red;color:#fff;padding:4px;z-index:2147483647;font-size:12px;'; __d.textContent = 'OVERLAYS:' + (det.extractions?.length || 0); __c.appendChild(__d); }
       // Auto-enable inspect visuals so hover/select work without side-panel toggle
       overlays.setMode('inspect', {
         onElementHover: (element, info) => {
@@ -142,7 +137,8 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
 
         lastDetection = result;
         const __h2 = document.getElementById('tabwize-overlay-host');
-        if (__h2) __h2.textContent = 'OVERLAYS:' + (result.extractions?.length || 0);
+        const __c2 = __h2 && __h2.shadowRoot && __h2.shadowRoot.querySelector('#overlay-container');
+        if (__c2) { const __d2 = document.createElement('div'); __d2.style.cssText='position:fixed;top:0;left:0;background:red;color:#fff;padding:4px;z-index:2147483647;font-size:12px;'; __d2.textContent = 'OVERLAYS:' + (result.extractions?.length || 0); __c2.appendChild(__d2); }
         sendResponse({ success: true, nodes: serializable, result });
       })
       .catch((error) => {
