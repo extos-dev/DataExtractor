@@ -49,6 +49,10 @@ export class RegionGrouper {
     this.groupBreadcrumbs(blocks);
     this.groupForms(blocks);
     this.groupMedia(blocks);
+    this.groupInputs(blocks);
+    this.groupComposers(blocks);
+    this.groupBars(blocks);
+    this.groupActions(blocks);
 
     const byKind = {} as Record<RegionKind, number>;
     for (const region of this.regions) {
@@ -295,6 +299,54 @@ export class RegionGrouper {
         blocks: [item],
         score: item.score,
         metadata: { ...item.metadata },
+      });
+    }
+  }
+
+  private groupInputs(blocks: BlockCandidate[]): void {
+    for (const input of blocks.filter((block) => block.kind === 'input')) {
+      this.addRegion({
+        kind: 'input',
+        anchor: input,
+        blocks: [input],
+        score: input.score,
+        metadata: { ...input.metadata },
+      });
+    }
+  }
+
+  private groupComposers(blocks: BlockCandidate[]): void {
+    for (const composer of blocks.filter((block) => block.kind === 'composer')) {
+      this.addRegion({
+        kind: 'composer',
+        anchor: composer,
+        blocks: [composer],
+        score: composer.score,
+        metadata: { ...composer.metadata },
+      });
+    }
+  }
+
+  private groupBars(blocks: BlockCandidate[]): void {
+    for (const bar of blocks.filter((block) => block.kind === 'bar')) {
+      this.addRegion({
+        kind: 'bar',
+        anchor: bar,
+        blocks: [bar],
+        score: bar.score,
+        metadata: { ...bar.metadata },
+      });
+    }
+  }
+
+  private groupActions(blocks: BlockCandidate[]): void {
+    for (const action of blocks.filter((block) => block.kind === 'action')) {
+      this.addRegion({
+        kind: 'action',
+        anchor: action,
+        blocks: [action],
+        score: action.score,
+        metadata: { ...action.metadata },
       });
     }
   }

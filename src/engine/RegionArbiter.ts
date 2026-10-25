@@ -17,6 +17,12 @@ const SPECIFICITY: Record<PatternType, number> = {
   blog_index: 0.5,
   navigation: 0.5,
   generic: 0.1,
+  input: 0.6,
+  composer: 0.75,
+  bar: 0.45,
+  panel: 0.5,
+  action: 0.4,
+  text: 0.35,
 };
 
 export class RegionArbiter {

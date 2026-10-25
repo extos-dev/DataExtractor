@@ -6,6 +6,26 @@ export interface OverlayOptions {
 
 export type OverlayMode = 'default' | 'inspect' | 'edit';
 
+const KIND_COLOR: Record<string, string> = {
+  article: '#8b5cf6',
+  product: '#f59e0b',
+  product_listing: '#f97316',
+  ai_chat: '#06b6d4',
+  table: '#10b981',
+  list: '#6366f1',
+  input: '#ec4899',
+  composer: '#14b8a6',
+  bar: '#64748b',
+  panel: '#a855f7',
+  action: '#ef4444',
+  text: '#94a3b8',
+  navigation: '#0ea5e9',
+  breadcrumb: '#84cc16',
+  form: '#f43f5e',
+  media: '#22c55e',
+  generic: '#9ca3af',
+};
+
 export interface InspectOptions {
   onElementHover?: (element: Element | null, info: any) => void;
   onElementSelect?: (element: Element, info: any) => void;
@@ -376,8 +396,11 @@ export class OverlayManager {
       if (!item.element) return;
       const rect = item.element.getBoundingClientRect();
 
+      const color = KIND_COLOR[item.kind] ?? '#3b82f6';
       const box = document.createElement('div');
       box.className = 'highlight-box';
+      box.style.borderColor = color;
+      box.style.background = color + '14';
       box.style.top = `${rect.top + window.scrollY}px`;
       box.style.left = `${rect.left + window.scrollX}px`;
       box.style.width = `${rect.width}px`;
@@ -385,7 +408,8 @@ export class OverlayManager {
 
       const badge = document.createElement('div');
       badge.className = 'badge';
-      badge.textContent = `✨ ${item.llmContext.title || item.kind}`;
+      badge.style.background = color;
+      badge.textContent = `${item.kind} · ${item.llmContext.title || ''}`.trim();
       box.appendChild(badge);
 
       box.addEventListener('click', (e) => {

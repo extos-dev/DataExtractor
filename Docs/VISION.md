@@ -150,3 +150,99 @@ Each schema should store:
 - Field mappings (what to extract: title, content, author, etc.)
 - Extraction template/format
 - Creation source (auto vs manual)
+
+---
+
+## Updated Vision (Oct 2026)
+
+### 1. Rich DOM Autodetection
+
+The detection system must be broad and deep, covering every meaningful UI surface, not only articles/products/chats/tables. Detectors and region kinds should be extended to recognize:
+
+- **Text surfaces**: paragraphs, headings, inline text, blockquotes, code blocks, captions, labels, tooltips.
+- **Tables**: semantic `<table>` and visual/div-based grids, including headers, rows, cells, footers, sortable columns, pagination.
+- **Lists**: ordered/unordered lists, definition lists, nested lists, menu lists, option lists.
+- **Input & entry fields**: text inputs, textareas, contenteditable, search boxes, password fields, number/date pickers, selects, checkboxes, radios, toggles, sliders.
+- **Composers**: chat/message composers, rich-text editors, comment boxes, reply forms, with send/submit controls.
+- **Bars & navigation**: top bars, app bars, toolbars, tab bars, breadcrumbs, sidebars, drawers, nav menus, footer bars, status bars.
+- **Panels & containers**: side panels, modals, dialogs, drawers, cards, accordions, tabs/panels, split views, resizable regions.
+- **Media**: images, videos, audio, galleries, carousels, avatars, icons.
+- **Data display**: badges, chips, tags, progress, stats, KPIs, charts placeholders, empty states, loading skeletons.
+- **Actions**: buttons, links, icon buttons, FABs, dropdown triggers, context menus.
+
+Each detected element/region must carry stable selectors, DOM paths, roles, accessible names, and confidence, enabling reliable schema creation and reuse across visits.
+
+### 2. Edit-Mode Visuals & Icons
+
+Edit/inspect mode must provide smooth, clear, non-intrusive visuals that make element recognition instant:
+
+- Color-coded outlines per element kind (text, input, table, list, nav, panel, media, action) with consistent icon badges.
+- Hover highlight with a floating tooltip showing tag, role, classes, selector, confidence, and detected kind.
+- Selection state with persistent contour, glow, and a small action chip (select, mark as field, copy selector).
+- Lightweight animations (fade/scale) for hover/selection transitions; no layout shift.
+- Icon set (SVG) for each kind, rendered both on-page overlays and in the side panel tree.
+- Distinct states for detected (auto), manually marked, and excluded regions.
+
+### 3. Interactive DOM Map (DevTools-like)
+
+The DOM Tree tab must become a full interactive explorer comparable to browser DevTools Elements panel:
+
+- Virtualized, lazy-rendered tree for large DOMs with expand/collapse, depth controls, and search/filter (tag, text, selector, role).
+- Bidirectional sync: tree selection highlights/scrolls the page element; page hover/click updates tree selection.
+- Inline element details panel: attributes, computed styles (subset), box model, text, child count, selector.
+- Context actions: copy selector/XPath, reveal in page, mark region type, create schema from selection, exclude subtree.
+- Breadcrumb path bar, parent traversal, and quick jump to detected regions.
+- Keyboard navigation (arrows, Enter, Escape) and shortcuts for mode toggling and inspection.
+- Persist expanded/collapsed state and selected node across tab switches.
+
+### 4. Schema Creation UX
+
+- One-click "Create schema from selection" in edit mode, pre-filled with detected kind and field mappings.
+- Visual confirmation and editable field list before saving.
+- Schema list in first tab with run/edit/delete/duplicate actions and last-run status.
+- Auto-created schemas clearly badged; manual schemas editable.
+
+### 5. Progressive Detection & Performance
+
+- Page type first, then type-prioritized detectors; lazy detector loading.
+- Incremental re-detection on DOM mutations (debounced) without full re-run.
+- Caching of normalized DOM and regions; memory-safe for large pages.
+- Smooth 60fps overlays via requestAnimationFrame and CSS transforms.
+
+### 6. Accessibility & Polish
+
+- Keyboard-first operation, ARIA roles, focus management, high-contrast mode.
+- Reduced-motion support.
+- Consistent theming (light/dark) for side panel.
+
+This updated vision supersedes the Phase 1–5 plan above and becomes the target for implementation.
+
+---
+
+## Inspiration from Prior Build (`tabwize-data-extractor`)
+
+The following proven patterns from the earlier build should be adapted (not copied) into this engine:
+
+### Autodetection Patterns
+- **Semantic landmark tree** (`pageStructure.ts`): Build a semantic tree of landmarks (header/nav/main/aside/footer) with typed nodes (record_list, table, article, headings, form, pagination, links). Noise nodes flagged for default collapse; every node maps back to a live Element for hover/select sync.
+- **Entity detectors** (`entityDetectors.ts`): Surface data points (phone, email, social, address, structured/JSON-LD/OG/meta) with source attribution and confidence; precision over recall.
+- **Page features & classifier** (`pageFeatures.ts`, `pageClassifier.ts`): Feature-based page typing to prioritize detectors.
+- **Record mining & clustering** (`mdr.ts`, `recordClustering.ts`, `repetition.ts`): Detect repeating records/record lists and cluster them; pattern binder matches against builtin patterns.
+- **Table detection** (`tableDetector.ts`, `tableResolver.ts`, `tableSelector.ts`): Semantic + visual/div tables, quality scores, selector generation.
+- **DOM visibility** (`domVisibility.ts`): Visibility gating for detection.
+- **Selector generation** (`selectorBuilder.ts`, `selectorGeneration.ts`): Stable selectors with healing support (`recipeHealing.ts`).
+- **Dynamic capture** (`dynamicCapture.ts`, `expansion.ts`, `scrollDriver.ts`, `paginationCapture.ts`): Scroll/pagination/expansion handling for lazy content.
+
+### Visuals & Overlays (from `contentStyles.css`)
+- Kind color-coded outlines (blue detect, green selected) with outline-offset and subtle background tint.
+- Floating selection panel with options and close; toast notifications (error variant).
+- Toolbar/bar with nav arrows, chips, labels, meta, action buttons, column mapper panel, export menu.
+- Preview highlighter for hover states (`edit-ui/previewHighlighter.ts`).
+- Checkbox styling and column-mapping rows for schema field configuration.
+
+### UI Structure
+- Side panel tabs (Page Info, DOM Tree/Structure, LLM Snapshot, Settings) with collapsible sections.
+- Structure panel rendering the semantic landmark tree with bidirectional element sync.
+- Table tabs, quality badges, extraction progress meter, column mapping with bulk actions.
+
+These should inform the richer DOM map, edit-mode visuals, and autodetection breadth in this repo.

@@ -7,6 +7,9 @@ const TABLE_TAGS = new Set(['TABLE']);
 const MEDIA_TAGS = new Set(['FIGURE', 'PICTURE', 'VIDEO', 'AUDIO']);
 const NAV_TAGS = new Set(['NAV', 'HEADER', 'FOOTER']);
 const FORM_TAGS = new Set(['FORM']);
+const INPUT_TAGS = new Set(['INPUT', 'TEXTAREA', 'SELECT']);
+const BUTTON_TAGS = new Set(['BUTTON']);
+const BAR_TAGS = new Set(['HEADER', 'FOOTER', 'NAV', 'ASIDE']);
 
 const CHAT_ROLE_PATTERNS = [
   /data-message-role/i,
@@ -124,6 +127,25 @@ export class BlockSegmenter {
         inputCount: node.features.inputCount,
         buttonCount: node.features.buttonCount,
       });
+    }
+
+    if (INPUT_TAGS.has(tag) || role === 'textbox' || role === 'searchbox' || role === 'combobox') {
+      return this.classifyInput(node);
+    }
+
+    if (BUTTON_TAGS.has(tag) || role === 'button') {
+      return this.createBlock(node, 'action', {
+        text: node.features.text,
+      });
+    }
+
+    if (tag === 'TEXTAREA' || role === 'textbox') {
+      const composer = this.classifyComposer(node);
+      if (composer) return composer;
+    }
+
+    if (BAR_TAGS.has(tag) || role === 'banner' || role === 'toolbar' || role === 'navigation' || role === 'complementary' || role === 'contentinfo') {
+      return this.classifyBar(node);
     }
 
     if (MEDIA_TAGS.has(tag)) {
@@ -444,6 +466,53 @@ export class BlockSegmenter {
 
     const ariaLevel = element.getAttribute('aria-level');
     return ariaLevel ? Number(ariaLevel) : 1;
+  }
+
+  private classifyInput(node: NormalizedDomNode): BlockCandidate | null {
+    const text = node.features.text ?? '';
+    const score = 0.7;
+    return this.createBlock(
+      node,
+      'input',
+      {
+        inputType: (node.element as HTMLInputElement).type ?? 'text',
+        placeholder: (node.element as HTMLInputElement).placeholder ?? '',
+        textLength: text.length,
+      },
+      clamp(score)
+    );
+  }
+
+  private classifyComposer(node: NormalizedDomNode): BlockCandidate | null {
+    const root = node.element.closest('body') ?? node.element.ownerDocument.body;
+    const hasSend = Boolean(
+      root?.querySelector('[aria-label*="send" i], button[type="submit"], [data-testid*="send" i]')
+    );
+    const score = hasSend ? 0.82 : 0.55;
+    return this.createBlock(
+      node,
+      'composer',
+      {
+        hasSendControl: hasSend,
+        textLength: (node.features.text ?? '').length,
+      },
+      clamp(score)
+    );
+  }
+
+  private classifyBar(node: NormalizedDomNode): BlockCandidate | null {
+    const linkCount = node.features.linkCount ?? 0;
+    const buttonCount = node.features.buttonCount ?? 0;
+    const score = clamp(0.5 + Math.min(0.2, linkCount * 0.02) + Math.min(0.15, buttonCount * 0.03));
+    return this.createBlock(
+      node,
+      'bar',
+      {
+        linkCount,
+        buttonCount,
+      },
+      score
+    );
   }
 
   private createBlock(
