@@ -36,3 +36,5 @@ export { OverlayManager } from './visual/OverlayManager';
 
 export { SelectorStabilizer } from './stability/SelectorStabilizer';
 export { RegionLocatorStore } from './stability/RegionLocatorStore';
+
+export type { Message, ElementInfo, OverlayMode } from './messaging/types';
