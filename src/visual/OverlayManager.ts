@@ -412,6 +412,23 @@ export class OverlayManager {
       badge.textContent = `${item.kind} · ${item.llmContext.title || ''}`.trim();
       box.appendChild(badge);
 
+      const toolbar = document.createElement('div');
+      toolbar.style.position = 'absolute';
+      toolbar.style.top = '-26px';
+      toolbar.style.left = '0px';
+      toolbar.style.display = 'flex';
+      toolbar.style.alignItems = 'center';
+      toolbar.style.gap = '6px';
+      toolbar.style.padding = '3px 8px';
+      toolbar.style.background = color;
+      toolbar.style.color = '#fff';
+      toolbar.style.fontSize = '11px';
+      toolbar.style.fontWeight = '600';
+      toolbar.style.borderRadius = '4px 4px 0 0';
+      toolbar.style.boxShadow = '0 2px 6px rgba(0,0,0,0.15)';
+      toolbar.textContent = `T1 ${item.kind}`;
+      box.appendChild(toolbar);
+
       box.addEventListener('click', (e) => {
         e.stopPropagation();
         this.showContextMenu(e.clientX, e.clientY, item);

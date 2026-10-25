@@ -3442,6 +3442,22 @@ var OverlayManager = class {
       badge.style.background = color;
       badge.textContent = `${item.kind} \xB7 ${item.llmContext.title || ""}`.trim();
       box.appendChild(badge);
+      const toolbar = document.createElement("div");
+      toolbar.style.position = "absolute";
+      toolbar.style.top = "-26px";
+      toolbar.style.left = "0px";
+      toolbar.style.display = "flex";
+      toolbar.style.alignItems = "center";
+      toolbar.style.gap = "6px";
+      toolbar.style.padding = "3px 8px";
+      toolbar.style.background = color;
+      toolbar.style.color = "#fff";
+      toolbar.style.fontSize = "11px";
+      toolbar.style.fontWeight = "600";
+      toolbar.style.borderRadius = "4px 4px 0 0";
+      toolbar.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)";
+      toolbar.textContent = `T1 ${item.kind}`;
+      box.appendChild(toolbar);
       box.addEventListener("click", (e) => {
         e.stopPropagation();
         this.showContextMenu(e.clientX, e.clientY, item);
@@ -3712,10 +3728,12 @@ async function autoDetectOnLoad() {
 }
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(autoDetectOnLoad, 500);
+    setTimeout(autoDetectOnLoad, 2e3);
+    setTimeout(autoDetectOnLoad, 4e3);
   });
 } else {
-  setTimeout(autoDetectOnLoad, 500);
+  setTimeout(autoDetectOnLoad, 2e3);
+  setTimeout(autoDetectOnLoad, 4e3);
 }
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.action === "RUN_DETECTION") {
@@ -3752,6 +3770,10 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.action === "SET_MODE") {
     const mode = request.mode || "default";
     if (mode === "inspect" || mode === "edit") {
+      if (lastDetection) overlays.render(lastDetection.extractions, { onNodeSelect: (item) => {
+        chrome.runtime.sendMessage({ action: "NODE_SELECTED_IN_PAGE", payload: item }).catch(() => {
+        });
+      } });
       overlays.setMode("inspect", {
         onElementHover: (element, info) => {
           chrome.runtime.sendMessage({

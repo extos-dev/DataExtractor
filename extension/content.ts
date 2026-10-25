@@ -87,10 +87,12 @@ async function autoDetectOnLoad() {
 // Run auto-detect after a short delay
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(autoDetectOnLoad, 500);
+    setTimeout(autoDetectOnLoad, 2000);
+  setTimeout(autoDetectOnLoad, 4000);
   });
 } else {
-  setTimeout(autoDetectOnLoad, 500);
+  setTimeout(autoDetectOnLoad, 2000);
+  setTimeout(autoDetectOnLoad, 4000);
 }
 
 chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
@@ -136,6 +138,7 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   if (request.action === 'SET_MODE') {
     const mode = request.mode || 'default';
     if (mode === 'inspect' || mode === 'edit') {
+      if (lastDetection) overlays.render(lastDetection.extractions, { onNodeSelect: (item:any) => { chrome.runtime.sendMessage({ action: 'NODE_SELECTED_IN_PAGE', payload: item }).catch(()=>{}); } });
       overlays.setMode('inspect', {
         onElementHover: (element, info) => {
           chrome.runtime.sendMessage({
