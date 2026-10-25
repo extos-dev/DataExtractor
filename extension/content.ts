@@ -17,7 +17,14 @@ let currentSchemas: any[] = [];
 let lastDetection: any = null;
 
 // Auto-detect page type on load
+if (!document.getElementById('tabwize-overlay-host')) {
+  const __hx = document.createElement('div');
+  __hx.id = 'tabwize-overlay-host';
+  __hx.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147483647;';
+  (document.body || document.documentElement).appendChild(__hx);
+}
 async function autoDetectOnLoad() {
+  const __h0 = document.getElementById('tabwize-overlay-host') || (document.body && (document.body.appendChild(Object.assign(document.createElement('div'),{id:'tabwize-overlay-host'})), document.getElementById('tabwize-overlay-host')));
   try {
     const contextBuilder = new ContextBuilder();
     const context = await contextBuilder.build(document.body as HTMLElement);
@@ -93,6 +100,8 @@ async function autoDetectOnLoad() {
     }).catch(() => {});
   } catch (e) {
     console.error('Auto-detect failed', e);
+    const __he = document.getElementById('tabwize-overlay-host');
+    if (__he) __he.textContent = 'ERR:' + String(e).slice(0,80);
   }
 }
 
