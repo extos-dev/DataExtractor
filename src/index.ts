@@ -38,3 +38,6 @@ export { SelectorStabilizer } from './stability/SelectorStabilizer';
 export { RegionLocatorStore } from './stability/RegionLocatorStore';
 
 export type { Message, ElementInfo, OverlayMode } from './messaging/types';
+
+export { SchemaRunner } from './schema/SchemaRunner';
+export type { SchemaRunResult, FieldResult } from './schema/SchemaRunner';

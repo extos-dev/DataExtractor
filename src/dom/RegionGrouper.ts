@@ -43,6 +43,7 @@ export class RegionGrouper {
     this.groupArticles(blocks);
     this.groupAiChat(blocks);
     this.groupProductListings(blocks);
+    this.groupRecordLists(blocks);
     this.groupTables(blocks);
     this.groupLists(blocks);
     this.groupNavigation(blocks);
@@ -347,6 +348,18 @@ export class RegionGrouper {
         blocks: [action],
         score: action.score,
         metadata: { ...action.metadata },
+      });
+    }
+  }
+
+  private groupRecordLists(blocks: BlockCandidate[]): void {
+    for (const rg of blocks.filter((block) => block.kind === 'record_group')) {
+      this.addRegion({
+        kind: 'record_list',
+        anchor: rg,
+        blocks: [rg],
+        score: rg.score,
+        metadata: { ...rg.metadata },
       });
     }
   }

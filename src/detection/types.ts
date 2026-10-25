@@ -18,6 +18,7 @@ export type PatternType =
   | 'blog_index'
   | 'product'
   | 'product_listing'
+  | 'record_list'
   | 'ai_chat'
   | 'table'
   | 'list'

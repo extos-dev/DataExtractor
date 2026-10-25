@@ -4,6 +4,7 @@ export type BlockKind =
   | 'list'
   | 'table'
   | 'card_grid'
+  | 'record_group'
   | 'chat_message'
   | 'form'
   | 'input'

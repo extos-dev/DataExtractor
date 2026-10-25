@@ -2,7 +2,6 @@ import { DetectorPlugin } from '../detection/types';
 import { ArticleDetector } from '../detection/detectors/ArticleDetector';
 import { AiChatDetector } from '../detection/detectors/AiChatDetector';
 import { TableDetector } from '../detection/detectors/TableDetector';
-import { SurfaceDetector } from '../detection/detectors/SurfaceDetector';
 import { ProductDetector } from '../detection/detectors/ProductDetector';
 import { ProductGridDetector } from '../detection/detectors/ProductGridDetector';
 
@@ -17,7 +16,6 @@ export function createCoreDetectors(): DetectorPlugin[] {
     new ArticleDetector(),
     new AiChatDetector(),
     new TableDetector(),
-    new SurfaceDetector(),
   ];
 }
 

@@ -171,6 +171,11 @@ export class BlockSegmenter {
       return cardGrid;
     }
 
+    const recordGroup = this.classifyRecordGroup(node);
+    if (recordGroup) {
+      return recordGroup;
+    }
+
     if (this.looksLikeBreadcrumb(node)) {
       return this.createBlock(node, 'breadcrumb', {
         linkCount: node.features.linkCount,
@@ -406,6 +411,37 @@ export class BlockSegmenter {
     }
 
     return null;
+  }
+
+  private classifyRecordGroup(node: NormalizedDomNode): BlockCandidate | null {
+    const children = Array.from(node.element.children);
+    if (children.length < 3) return null;
+
+    const fingerprints = children.map((child) => this.createStructuralFingerprint(child));
+    const counts = new Map<string, number>();
+    for (const fp of fingerprints) counts.set(fp, (counts.get(fp) ?? 0) + 1);
+    const dominant = Math.max(...counts.values());
+    const ratio = dominant / children.length;
+    if (ratio < 0.6) return null;
+
+    const hasImages = node.features.imageCount >= children.length * 0.4;
+    const hasLinks = node.features.linkCount >= children.length * 0.4;
+    let score = 0.5 + ratio * 0.3;
+    if (hasImages) score += 0.08;
+    if (hasLinks) score += 0.07;
+
+    return this.createBlock(
+      node,
+      'record_group',
+      {
+        itemCount: children.length,
+        dominantRatio: ratio,
+        hasImages,
+        hasLinks,
+        fingerprint: [...counts.entries()].sort((a,b)=>b[1]-a[1])[0][0],
+      },
+      clamp(score)
+    );
   }
 
   private createStructuralFingerprint(element: Element): string {

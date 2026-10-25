@@ -5,6 +5,7 @@ export type RegionKind =
   | 'blog_index'
   | 'product'
   | 'product_listing'
+  | 'record_list'
   | 'ai_chat'
   | 'data_table'
   | 'list'

@@ -7,6 +7,7 @@ import {
 const SPECIFICITY: Record<PatternType, number> = {
   product: 0.95,
   product_listing: 0.9,
+  record_list: 0.88,
   ai_chat: 0.9,
   article: 0.85,
   table: 0.8,

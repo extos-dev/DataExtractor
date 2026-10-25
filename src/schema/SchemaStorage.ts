@@ -64,21 +64,22 @@ export class SchemaStorage {
 
   static async getForPage(domain?: string, url?: string, pageType?: string): Promise<ExtractionSchema[]> {
     const schemas = await this.getAllAsync();
-    return schemas.filter(schema => {
-      if (schema.domain && domain && schema.domain === domain) return true;
-      if (schema.pageType && pageType && schema.pageType === pageType) return true;
-      if (schema.urlPattern && url && schema.urlPattern.length <= 256) {
-        try {
-          const regex = new RegExp(schema.urlPattern);
-          if (regex.test(url)) return true;
-        } catch {}
-      }
-      // Also include manual schemas that might be broadly applicable
-      if (schema.source === 'manual' && (schema.domain === domain || !schema.domain)) {
-        return true;
-      }
-      return false;
-    });
+    const scored = schemas
+      .map((schema) => {
+        let score = 0;
+        if (schema.domain && domain && schema.domain === domain) score += 3;
+        if (schema.urlPattern && url && schema.urlPattern.length <= 256) {
+          try {
+            if (new RegExp(schema.urlPattern).test(url)) score += 4;
+          } catch {}
+        }
+        if (schema.pageType && pageType && schema.pageType === pageType) score += 1;
+        if (schema.source === 'manual' && (!schema.domain || schema.domain === domain)) score += 0.5;
+        return { schema, score };
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score);
+    return scored.map((entry) => entry.schema);
   }
 
   static createAutoSchema(name: string, pageType: string, domain: string, region: any): ExtractionSchema {
@@ -127,13 +128,15 @@ export class SchemaStorage {
           { name: 'content', type: 'html' }
         ];
       case 'product_detail':
+      case 'product_listing':
         return [
           { name: 'title', type: 'text' },
           { name: 'price', type: 'text' },
           { name: 'description', type: 'html' },
           { name: 'images', type: 'list' }
         ];
-      case 'ai_chat':
+      case 'documentation':
+      case 'news_article':
         return [
           { name: 'messages', type: 'list' }
         ];
