@@ -206,6 +206,11 @@ function renderDomTree(node: any, container: HTMLElement) {
 }
 
 function buildTreeNode(node: any, depth: number): HTMLElement {
+  const kindIcons: Record<string,string> = {
+    article:'¶', product:'🏷', record_list:'▤', table:'▦', ai_chat:'💬', list:'☰',
+    input:'✎', composer:'⌨', bar:' ', panel:' ', action:' ', text:'¶',
+    navigation:'☰', breadcrumb:'›', form:'✎', media:'🖼',
+  };
   const kindColors: Record<string,string> = {
     article:'#8b5cf6', product:'#f59e0b', record_list:'#f97316', table:'#10b981',
     ai_chat:'#06b6d4', list:'#6366f1', input:'#ec4899', composer:'#14b8a6',
@@ -235,7 +240,8 @@ function buildTreeNode(node: any, depth: number): HTMLElement {
   if (node.className) html += ` <span class="tree-class">.${String(node.className).split(' ')[0]}</span>`;
   if (node.kind) {
     const c = kindColors[node.kind] || '#6b7280';
-    html += ` <span style="background:${c};color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:4px;">${node.kind}</span>`;
+    const ic = kindIcons[node.kind] || '•';
+    html += ` <span style="background:${c};color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:4px;">${ic} ${node.kind}${node.score ? ' ' + node.score + '%' : ''}</span>`;
   }
   label.innerHTML = html;
 

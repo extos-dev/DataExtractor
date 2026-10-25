@@ -262,6 +262,7 @@ function findKind(el: Element, detection: any): string | undefined {
 
 function serializeDomTree(root: Element, depth = 0, detection: any = null): any {
   if (depth > 6) return null;
+  const cand = (detection?.selected || detection?.candidates || []).find((c:any) => c.element === root);
   const info = {
     tagName: root.tagName.toLowerCase(),
     id: root.id || undefined,
@@ -269,6 +270,7 @@ function serializeDomTree(root: Element, depth = 0, detection: any = null): any 
     textContent: (root.textContent || '').trim().substring(0, 60),
     selector: generateSimpleSelector(root),
     kind: findKind(root, detection),
+    score: cand ? Math.round((cand.score||0)*100) : undefined,
     children: [] as any[]
   };
   

@@ -3894,6 +3894,7 @@ function findKind(el, detection) {
 }
 function serializeDomTree(root, depth = 0, detection = null) {
   if (depth > 6) return null;
+  const cand = (detection?.selected || detection?.candidates || []).find((c) => c.element === root);
   const info = {
     tagName: root.tagName.toLowerCase(),
     id: root.id || void 0,
@@ -3901,6 +3902,7 @@ function serializeDomTree(root, depth = 0, detection = null) {
     textContent: (root.textContent || "").trim().substring(0, 60),
     selector: generateSimpleSelector(root),
     kind: findKind(root, detection),
+    score: cand ? Math.round((cand.score || 0) * 100) : void 0,
     children: []
   };
   const children = Array.from(root.children).slice(0, 50);

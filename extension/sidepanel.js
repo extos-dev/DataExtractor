@@ -172,6 +172,24 @@ function renderDomTree(node, container) {
   container.appendChild(root);
 }
 function buildTreeNode(node, depth) {
+  const kindIcons = {
+    article: "\xB6",
+    product: "\u{1F3F7}",
+    record_list: "\u25A4",
+    table: "\u25A6",
+    ai_chat: "\u{1F4AC}",
+    list: "\u2630",
+    input: "\u270E",
+    composer: "\u2328",
+    bar: "\xA0",
+    panel: "\xA0",
+    action: "\xA0",
+    text: "\xB6",
+    navigation: "\u2630",
+    breadcrumb: "\u203A",
+    form: "\u270E",
+    media: "\u{1F5BC}"
+  };
   const kindColors = {
     article: "#8b5cf6",
     product: "#f59e0b",
@@ -210,7 +228,8 @@ function buildTreeNode(node, depth) {
   if (node.className) html += ` <span class="tree-class">.${String(node.className).split(" ")[0]}</span>`;
   if (node.kind) {
     const c = kindColors[node.kind] || "#6b7280";
-    html += ` <span style="background:${c};color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:4px;">${node.kind}</span>`;
+    const ic = kindIcons[node.kind] || "\u2022";
+    html += ` <span style="background:${c};color:#fff;padding:1px 5px;border-radius:3px;font-size:9px;margin-left:4px;">${ic} ${node.kind}${node.score ? " " + node.score + "%" : ""}</span>`;
   }
   label.innerHTML = html;
   row.appendChild(arrow);
