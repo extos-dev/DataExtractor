@@ -3715,6 +3715,8 @@ async function autoDetectOnLoad() {
           });
         }
       });
+      const __h = document.getElementById("tabwize-overlay-host");
+      if (__h) __h.textContent = "OVERLAYS:" + (det.extractions?.length || 0);
       overlays.setMode("inspect", {
         onElementHover: (element, info) => {
           chrome.runtime.sendMessage({ action: "ELEMENT_HOVER", payload: { element: info } }).catch(() => {
@@ -3770,6 +3772,8 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         llmContext: item.llmContext
       }));
       lastDetection = result;
+      const __h2 = document.getElementById("tabwize-overlay-host");
+      if (__h2) __h2.textContent = "OVERLAYS:" + (result.extractions?.length || 0);
       sendResponse({ success: true, nodes: serializable, result });
     }).catch((error) => {
       sendResponse({ success: false, error: String(error) });

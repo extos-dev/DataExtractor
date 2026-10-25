@@ -68,6 +68,8 @@ async function autoDetectOnLoad() {
           chrome.runtime.sendMessage({ action: 'NODE_SELECTED_IN_PAGE', payload: item }).catch(() => {});
         },
       });
+      const __h = document.getElementById('tabwize-overlay-host');
+      if (__h) __h.textContent = 'OVERLAYS:' + (det.extractions?.length || 0);
       // Auto-enable inspect visuals so hover/select work without side-panel toggle
       overlays.setMode('inspect', {
         onElementHover: (element, info) => {
@@ -130,6 +132,8 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
         }));
 
         lastDetection = result;
+        const __h2 = document.getElementById('tabwize-overlay-host');
+        if (__h2) __h2.textContent = 'OVERLAYS:' + (result.extractions?.length || 0);
         sendResponse({ success: true, nodes: serializable, result });
       })
       .catch((error) => {
