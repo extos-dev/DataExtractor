@@ -1,3 +1,4 @@
+console.log('CONTENT SCRIPT LOADED', location.href);
 import { ExtractorEngine } from '../src/engine/ExtractionEngine';
 import { registerCoreDetectors } from '../src/engine/registerCoreDetectors';
 import { OverlayManager } from '../src/visual/OverlayManager';
@@ -65,6 +66,15 @@ async function autoDetectOnLoad() {
       overlays.render(det.extractions, {
         onNodeSelect: (item: any) => {
           chrome.runtime.sendMessage({ action: 'NODE_SELECTED_IN_PAGE', payload: item }).catch(() => {});
+        },
+      });
+      // Auto-enable inspect visuals so hover/select work without side-panel toggle
+      overlays.setMode('inspect', {
+        onElementHover: (element, info) => {
+          chrome.runtime.sendMessage({ action: 'ELEMENT_HOVER', payload: { element: info } }).catch(() => {});
+        },
+        onElementSelect: (element, info) => {
+          chrome.runtime.sendMessage({ action: 'ELEMENT_SELECTED', payload: { element: info } }).catch(() => {});
         },
       });
     } catch (e) {
@@ -136,9 +146,11 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
   }
 
   if (request.action === 'SET_MODE') {
+    console.log('SET_MODE received', request.mode);
     const mode = request.mode || 'default';
     if (mode === 'inspect' || mode === 'edit') {
       if (lastDetection) overlays.render(lastDetection.extractions, { onNodeSelect: (item:any) => { chrome.runtime.sendMessage({ action: 'NODE_SELECTED_IN_PAGE', payload: item }).catch(()=>{}); } });
+      console.log('enabling inspect mode');
       overlays.setMode('inspect', {
         onElementHover: (element, info) => {
           chrome.runtime.sendMessage({

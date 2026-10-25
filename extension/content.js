@@ -1490,10 +1490,10 @@ var ContextBuilder = class {
   }
   async extractPageMetadata(sourceRoot, normalized) {
     const doc = sourceRoot instanceof Document ? sourceRoot : sourceRoot.ownerDocument;
-    const location = typeof window !== "undefined" ? window.location : void 0;
-    const url = location?.href ?? "";
-    const hostname = location?.hostname ?? "";
-    const pathname = location?.pathname ?? "";
+    const location2 = typeof window !== "undefined" ? window.location : void 0;
+    const url = location2?.href ?? "";
+    const hostname = location2?.hostname ?? "";
+    const pathname = location2?.pathname ?? "";
     const meta = (name) => {
       if (!doc) return void 0;
       return doc.querySelector(`meta[name="${name}"]`)?.getAttribute("content") ?? doc.querySelector(`meta[property="${name}"]`)?.getAttribute("content") ?? void 0;
@@ -3663,6 +3663,7 @@ var SchemaStorage = class {
 };
 
 // extension/content.ts
+console.log("CONTENT SCRIPT LOADED", location.href);
 var engine = new ExtractorEngine();
 registerCoreDetectors(engine);
 var overlays = new OverlayManager();
@@ -3708,6 +3709,16 @@ async function autoDetectOnLoad() {
       overlays.render(det.extractions, {
         onNodeSelect: (item) => {
           chrome.runtime.sendMessage({ action: "NODE_SELECTED_IN_PAGE", payload: item }).catch(() => {
+          });
+        }
+      });
+      overlays.setMode("inspect", {
+        onElementHover: (element, info) => {
+          chrome.runtime.sendMessage({ action: "ELEMENT_HOVER", payload: { element: info } }).catch(() => {
+          });
+        },
+        onElementSelect: (element, info) => {
+          chrome.runtime.sendMessage({ action: "ELEMENT_SELECTED", payload: { element: info } }).catch(() => {
           });
         }
       });
@@ -3768,12 +3779,14 @@ chrome.runtime.onMessage.addListener((request, _sender, sendResponse) => {
     return true;
   }
   if (request.action === "SET_MODE") {
+    console.log("SET_MODE received", request.mode);
     const mode = request.mode || "default";
     if (mode === "inspect" || mode === "edit") {
       if (lastDetection) overlays.render(lastDetection.extractions, { onNodeSelect: (item) => {
         chrome.runtime.sendMessage({ action: "NODE_SELECTED_IN_PAGE", payload: item }).catch(() => {
         });
       } });
+      console.log("enabling inspect mode");
       overlays.setMode("inspect", {
         onElementHover: (element, info) => {
           chrome.runtime.sendMessage({
